@@ -1,1 +1,1 @@
-{"name":"ChargeSPOT LL-20 診断アプリ","short_name":"LL-20診断","start_url":"./","display":"standalone","background_color":"#f5f7fb","theme_color":"#111827","icons":[{"src":"icon.png","sizes":"192x192","type":"image/png"}]}
+{"name":"ChargeSPOT LL-20 修理支援アプリ","short_name":"LL20修理","start_url":"./index.html","display":"standalone","background_color":"#f5f7fb","theme_color":"#111827","icons":[{"src":"icon.png","sizes":"192x192","type":"image/png"}]}

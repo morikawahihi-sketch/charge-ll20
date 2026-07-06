@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>ChargeSPOT LL-20 診断アプリ Ver.1.0</title>
+  <title>ChargeSPOT LL-20 修理支援アプリ</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <header class="app-header">
   <div>
-    <h1>ChargeSPOT LL-20 診断アプリ</h1>
-    <p>LED・モニター・電源・温度・報告書・見積</p>
+    <h1>ChargeSPOT LL-20 修理支援アプリ</h1>
+    <p>故障診断・基板写真・写真保存・温度記録・報告書・見積</p>
   </div>
   <button id="homeBtn" class="ghost">ホーム</button>
 </header>
@@ -20,23 +20,63 @@
   <section id="home" class="screen active">
     <h2>ホーム画面：故障項目選択</h2>
     <div class="grid">
-      <button class="tile" data-open="led">💡 LED点灯しない</button>
-      <button class="tile" data-open="led">💡 LED点灯しない（部分的）</button>
-      <button class="tile" data-open="monitor">🖥 モニター画像が乱れる</button>
-      <button class="tile" data-open="monitor">🖥 モニター画像が映らない</button>
-      <button class="tile" data-open="power">📦 スロット・カセットを取り出せない</button>
-      <button class="tile" data-open="power">📦 スロット・カセットを戻しても認識しない</button>
-      <button class="tile" data-open="power">🔋 充電できない</button>
-      <button class="tile" data-open="power">📡 通信異常</button>
-      <button class="tile" data-open="power">🔁 再起動を繰り返す</button>
-      <button class="tile" data-open="power">⚡ ブレーカーが落ちる</button>
+      <button class="tile" data-open="diag" data-title="LED点灯しない">💡 LED点灯しない</button>
+      <button class="tile" data-open="diag" data-title="LED点灯しない（部分的）">💡 LED点灯しない（部分的）</button>
+      <button class="tile" data-open="diag" data-title="モニター画像が乱れる">🖥 モニター画像が乱れる</button>
+      <button class="tile" data-open="diag" data-title="モニター画像が映らない">🖥 モニター画像が映らない</button>
+      <button class="tile" data-open="diag" data-title="スロット・カセットを取り出せない">📦 スロット・カセットを取り出せない</button>
+      <button class="tile" data-open="diag" data-title="スロット・カセットを戻しても認識しない">🔄 スロット・カセットを戻しても認識しない</button>
+      <button class="tile" data-open="diag" data-title="充電できない">🔋 充電できない</button>
+      <button class="tile" data-open="diag" data-title="通信異常">📡 通信異常</button>
+      <button class="tile" data-open="diag" data-title="再起動を繰り返す">🔁 再起動を繰り返す</button>
+      <button class="tile" data-open="diag" data-title="ブレーカーが落ちる">⚡ ブレーカーが落ちる</button>
+    </div>
+
+    <h2>共通メニュー</h2>
+    <div class="grid">
+      <button class="tile accent" data-open="boards">🧩 基板写真</button>
+      <button class="tile" data-open="photo">📷 写真撮影・保存</button>
+      <button class="tile" data-open="temp">🌡 温度測定記録</button>
+      <button class="tile" data-open="report">📝 修理報告書</button>
+      <button class="tile" data-open="estimate">💰 見積書作成</button>
+      <button class="tile" data-open="ai">🤖 AI故障原因推定</button>
     </div>
     <div class="notice">通電測定・AC100V測定は感電注意。十分な知識のある方が安全を確保して行ってください。</div>
   </section>
 
-  <section id="led" class="screen"><h2>LED不点灯診断フローチャート</h2><div id="ledFlow" class="flow"></div></section>
-  <section id="monitor" class="screen"><h2>モニター不点灯診断</h2><div id="monitorFlow" class="flow"></div></section>
-  <section id="power" class="screen"><h2>電源異常診断</h2><div id="powerFlow" class="flow"></div></section>
+  <section id="diag" class="screen">
+    <h2 id="diagTitle">故障診断</h2>
+    <div id="diagFlow" class="flow"></div>
+    <button class="ghost" data-open="boards">関連する基板写真を見る</button>
+  </section>
+
+  <section id="boards" class="screen">
+    <h2>基板写真</h2>
+    <p class="hint">ChargeSPOT LL-20に組み込まれている電子基板写真です。写真を押すと拡大表示します。</p>
+    <div class="board-grid">
+      <article class="board-card">
+        <h3>メイン基板（ロジック基板）</h3>
+        <img src="images/main-board.jpg" alt="ChargeSPOT LL-20 メイン基板" class="zoomable">
+        <p>モニター表示、信号処理、フラットケーブル接続部を確認します。</p>
+        <ul>
+          <li>フラットケーブルの抜け・折れ・接触不良</li>
+          <li>コネクタ周辺の破損・汚れ</li>
+          <li>IC・コイル・コンデンサ周辺の発熱や焼け</li>
+        </ul>
+      </article>
+      <article class="board-card">
+        <h3>LED昇圧基板（バックライト用）</h3>
+        <img src="images/led-driver-board.jpg" alt="ChargeSPOT LL-20 LED昇圧基板" class="zoomable">
+        <p>LEDバックライトの昇圧・定電流制御を行う基板です。</p>
+        <ul>
+          <li>電解コンデンサの膨らみ・液漏れ</li>
+          <li>コイル、MOSFET、ダイオードの発熱</li>
+          <li>入力電圧、LED出力電圧、GND接続</li>
+        </ul>
+      </article>
+    </div>
+    <div class="notice">測定ポイントは今後、写真上に番号を付けて追加できます。</div>
+  </section>
 
   <section id="photo" class="screen">
     <h2>写真撮影・保存</h2>
@@ -65,7 +105,7 @@
       <input id="rWorker" placeholder="作業者名">
       <input id="rSerial" placeholder="機器番号・管理番号">
       <input id="rPlace" placeholder="設置場所">
-      <select id="rTrouble"><option>LED点灯しない</option><option>モニター不点灯</option><option>電源異常</option><option>再起動する</option><option>その他</option></select>
+      <select id="rTrouble"></select>
       <textarea id="rCause" placeholder="原因・診断結果"></textarea>
       <textarea id="rWork" placeholder="修理内容"></textarea>
       <textarea id="rParts" placeholder="交換部品"></textarea>
@@ -108,6 +148,7 @@
   </section>
 </main>
 
+<div id="modal" class="modal"><img id="modalImg" alt="拡大画像"><button id="closeModal">閉じる</button></div>
 <script src="script.js"></script>
 </body>
 </html>
