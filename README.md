@@ -1,25 +1,17 @@
-# ChargeSPOT LL-20 診断アプリ
+# ChargeSPOT LL-20 診断アプリ Ver.1.0
 
-GitHub Pagesで公開してスマホブラウザから使うための簡易診断アプリです。
+GitHub Pagesで公開してスマホブラウザから使う現場用アプリです。
 
-## ファイル構成
+## 機能
+- ホーム画面（故障項目選択）
+- LED不点灯診断フローチャート
+- モニター不点灯診断
+- 電源異常診断
+- 写真撮影・保存
+- 温度測定記録
+- 修理報告書（PDF保存/印刷）
+- 見積書作成
+- AI風の故障原因推定
 
-- index.html：画面本体
-- style.css：デザイン
-- script.js：診断・温度判定・報告書・見積ロジック
-- manifest.json：スマホアプリ風表示用
-- icon.png：アイコン
-
-## GitHub Pages公開方法
-
-1. GitHubで `charge-ll20` リポジトリを作成
-2. このフォルダ内の全ファイルをアップロード
-3. Settings → Pages
-4. Source: Deploy from a branch
-5. Branch: main / root を選択
-6. Save
-7. 表示されたURLをスマホで開く
-
-## 注意
-
-AC100Vの測定は感電リスクがあります。通電測定は十分な知識のある人が行ってください。
+## 更新方法
+既存のGitHubリポジトリ `charge-ll20` に、このフォルダ内のファイルを上書きアップロードしてください。

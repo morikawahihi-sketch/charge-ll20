@@ -1,90 +1,10 @@
-const steps = {
-  start: { q: "① AC100V入力はありますか？", yes: "dc_power", no: "r_ac" },
-  dc_power: { q: "② メイン電源DC出力 12V / 24V はありますか？", yes: "led_input", no: "r_power" },
-  led_input: { q: "③ LED昇圧基板の入力電圧はありますか？", yes: "boost_output", no: "r_input" },
-  boost_output: { q: "④ LED昇圧基板の出力電圧 40〜60V付近はありますか？", yes: "led_voltage", no: "gnd_check" },
-  gnd_check: { q: "⑤ モニター裏鉄板・GND・アース接続は正常ですか？", yes: "r_boost", no: "r_gnd" },
-  led_voltage: { q: "⑥ LEDバーのコネクタ部まで電圧は届いていますか？", yes: "led_bar", no: "r_led_wire" },
-  led_bar: { q: "⑦ LEDバー単体は点灯しますか？", yes: "signal", no: "r_led_bar" },
-  signal: { q: "⑧ BL_EN / PWM信号は出ていますか？", yes: "r_heat", no: "r_main" },
-  r_ac: { result: "原因候補：AC100V入力不良\n確認：電源コード、ヒューズ、端子台、スイッチ、ACライン断線。" },
-  r_power: { result: "原因候補：メイン電源基板不良\n確認：12V / 24V出力、ヒューズ、電解コンデンサ、焼損部品。" },
-  r_input: { result: "原因候補：LED昇圧基板までの配線不良\n確認：コネクタ抜け、接触抵抗、端子焼け、配線断線。" },
-  r_gnd: { result: "原因候補：GND・アース不良\nモニター裏鉄板との接続不良でLED昇圧基板が正常動作しない可能性があります。" },
-  r_boost: { result: "原因候補：LED昇圧基板不良\n重点確認：MOSFET、昇圧インダクタ、電解コンデンサ、R8/R9、ダイオード、ハンダクラック。" },
-  r_led_wire: { result: "原因候補：LEDバー配線・コネクタ不良\n確認：LEDコネクタ、細い配線、圧着部、導通、接触抵抗。" },
-  r_led_bar: { result: "原因候補：LEDバー不良\n確認：LED断線、劣化、発熱変色、はんだ割れ、バー内部断線。" },
-  r_main: { result: "原因候補：メイン基板・制御信号不良\n確認：BL_EN、PWM、LVDS、制御IC、信号線断線。" },
-  r_heat: { result: "原因候補：熱劣化・間欠不良\n確認：MOSFET温度、インダクタ温度、電解コンデンサESR、カバー内熱だまり、アース接触。" }
-};
-
-let current = "start";
-let historyStack = [];
-
-function renderDiagnosis() {
-  const step = steps[current];
-  const q = document.getElementById("question");
-  const b = document.getElementById("diagnosisButtons");
-  if (step.result) {
-    q.textContent = "診断結果";
-    b.innerHTML = `<div class="result">${step.result}</div><button class="back" onclick="goBack()">戻る</button><button class="reset" onclick="resetDiagnosis()">最初から</button>`;
-  } else {
-    q.textContent = step.q;
-    b.innerHTML = `<button class="yes" onclick="answer('yes')">はい</button><button class="no" onclick="answer('no')">いいえ</button><button class="back" onclick="goBack()">戻る</button><button class="reset" onclick="resetDiagnosis()">最初から</button>`;
-  }
-}
-function answer(ans) { historyStack.push(current); current = steps[current][ans]; renderDiagnosis(); }
-function goBack() { if (historyStack.length) { current = historyStack.pop(); renderDiagnosis(); } }
-function resetDiagnosis() { current = "start"; historyStack = []; renderDiagnosis(); }
-
-function val(id) { return parseFloat(document.getElementById(id).value); }
-function tempJudge() {
-  const outside = val("tOutside");
-  const top = val("tTop");
-  const mosfet = val("tMosfet");
-  const ind = val("tInductor");
-  const cap = val("tCap");
-  let msg = "温度判定\n";
-  if (!isNaN(outside) && !isNaN(top)) msg += `ケース上部−外気温：${(top - outside).toFixed(1)}℃\n`;
-  if (!isNaN(mosfet)) msg += mosfet >= 80 ? "MOSFET：危険域。放熱・負荷・基板劣化確認。\n" : mosfet >= 70 ? "MOSFET：注意。寿命低下リスクあり。\n" : "MOSFET：概ね良好。\n";
-  if (!isNaN(ind)) msg += ind >= 90 ? "インダクタ：高温。巻線・コア損失・換気不足確認。\n" : ind >= 75 ? "インダクタ：注意。\n" : "インダクタ：概ね良好。\n";
-  if (!isNaN(cap)) msg += cap >= 70 ? "電解コンデンサ：寿命短縮リスク大。105℃長寿命品を検討。\n" : cap >= 60 ? "電解コンデンサ：注意。\n" : "電解コンデンサ：概ね良好。\n";
-  document.getElementById("tempResult").textContent = msg;
-}
-
-function makeReport() {
-  const report = `修理報告書\n\n設置先：${document.getElementById("siteName").value}\n機番：${document.getElementById("machineNo").value}\n作業者：${document.getElementById("worker").value}\n作業日：${document.getElementById("workDate").value}\n\n作業内容：\n${document.getElementById("workContent").value}\n\n診断結果：\n${steps[current].result || steps[current].q}\n\n写真メモ：\n${document.getElementById("photoMemo").value}`;
-  document.getElementById("reportOutput").value = report;
-}
-
-function calcEstimate() {
-  const prices = { boost: 8500, led: 7500, wire: 3500, check: 3000 };
-  const total = (document.getElementById("qtyBoost").value || 0) * prices.boost +
-                (document.getElementById("qtyLed").value || 0) * prices.led +
-                (document.getElementById("qtyWire").value || 0) * prices.wire +
-                (document.getElementById("qtyCheck").value || 0) * prices.check;
-  document.getElementById("estimateResult").textContent = `概算見積：${total.toLocaleString()}円\n※単価は仮設定です。実際の部品代・作業単価に合わせてscript.js内で変更できます。`;
-}
-
-document.querySelectorAll(".tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById(btn.dataset.target).classList.add("active");
-  });
-});
-
-document.getElementById("photoInput").addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const img = document.getElementById("preview");
-  img.src = URL.createObjectURL(file);
-  img.style.display = "block";
-});
-
-document.getElementById("tempJudgeBtn").addEventListener("click", tempJudge);
-document.getElementById("makeReportBtn").addEventListener("click", makeReport);
-document.getElementById("calcEstimateBtn").addEventListener("click", calcEstimate);
-
-renderDiagnosis();
+const $=id=>document.getElementById(id);const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));const load=(k,d=[])=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+function openScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');scrollTo(0,0)}
+document.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openScreen(b.dataset.open));$('homeBtn').onclick=()=>openScreen('home');
+const flows={led:{start:['AC100V入力はありますか？','dc','AC入力不良：電源コード・ヒューズ・端子台を確認'],dc:['DC12V/24V出力はありますか？','in','電源基板不良：電解コンデンサ・ヒューズ・出力を確認'],in:['LED昇圧基板に入力電圧はありますか？','out','配線・コネクタ・端子接触不良'],out:['LED昇圧基板の出力40〜60V付近はありますか？','ledbar','LED昇圧基板不良：MOSFET・インダクタ・電解コンデンサ・R8/R9・GND確認'],ledbar:['LEDバー単体は点灯しますか？','signal','LEDバー断線・劣化・はんだ割れ'],signal:['BL_EN/PWM信号はありますか？','ok','メイン基板・制御信号不良'],ok:['熱劣化・間欠不良の可能性。温度記録へ進んでください。']},monitor:{start:['AC100VとDC電源は正常ですか？','lvds','電源系異常。電源異常診断へ'],lvds:['LVDS/映像ケーブルは抜け・傷なしですか？','backlight','LVDSケーブル・細い帯配線不良'],backlight:['バックライトLEDは点灯していますか？','main','LED昇圧基板またはLEDバー不良'],main:['画面にうっすら映像はありますか？','ok','モニター基板・メイン基板・信号不良'],ok:['バックライト低下または液晶パネル劣化の可能性。']},power:{start:['AC100V入力はありますか？','fuse','AC入力・コード・ブレーカー確認'],fuse:['ヒューズは切れていませんか？','dc','ヒューズ切れ。短絡原因も確認'],dc:['DC12V/24Vは安定していますか？','load','電源基板不良・コンデンサ劣化'],load:['負荷を外すと電源は復帰しますか？','ok','メイン基板または電源基板不良'],ok:['負荷側短絡：LED昇圧基板・モニター・ファン等を順番に切り離して確認。']}};
+function makeFlow(root,def){let cur='start',hist=[];function draw(){const f=def[cur],el=$(root);if(f.length===1){el.innerHTML=`<div class=resultbox>${f[0]}</div><button id=bk>戻る</button><button id=hm>ホーム</button>`;$('bk').onclick=()=>{cur=hist.pop()||'start';draw()};$('hm').onclick=()=>openScreen('home');return}el.innerHTML=`<div class=q>${f[0]}</div><div class=actions><button id=yes>はい</button><button id=no class=danger>いいえ</button></div><button id=bk>戻る</button>`;$('yes').onclick=()=>{hist.push(cur);cur=f[1];draw()};$('no').onclick=()=>{hist.push(cur);cur='res'+hist.length;def[cur]=[f[2]];draw()};$('bk').onclick=()=>{cur=hist.pop()||'start';draw()}}draw()}makeFlow('ledFlow',flows.led);makeFlow('monitorFlow',flows.monitor);makeFlow('powerFlow',flows.power);
+let photos=load('photos');function renderPhotos(){ $('photoList').innerHTML=photos.map(p=>`<div><img src="${p}"></div>`).join('')}renderPhotos();$('photoInput').onchange=e=>[...e.target.files].forEach(file=>{const r=new FileReader();r.onload=()=>{photos.push(r.result);save('photos',photos);renderPhotos()};r.readAsDataURL(file)});$('clearPhotos').onclick=()=>{photos=[];save('photos',photos);renderPhotos()};
+let temps=load('temps');function judge(t){return t>=80?'<span class=tag-danger>危険</span>':t>=70?'<span class=tag-danger>高温</span>':t>=60?'<span class=tag-warn>注意</span>':'<span class=tag-ok>良好</span>'}function renderTemps(){ $('tempRows').innerHTML=temps.map(x=>`<tr><td>${x.time}</td><td>${x.p}</td><td>${x.v}</td><td>${judge(Number(x.v))}</td><td>${x.m}</td></tr>`).join('')}renderTemps();$('addTemp').onclick=()=>{temps.push({time:new Date().toLocaleString(),p:$('tempPoint').value,v:$('tempValue').value,m:$('tempMemo').value});save('temps',temps);renderTemps()};$('clearTemps').onclick=()=>{temps=[];save('temps',temps);renderTemps()};
+$('makeReport').onclick=()=>{const html=`<h2>ChargeSPOT LL-20 修理報告書</h2><p><b>日付：</b>${$('rDate').value}</p><p><b>作業者：</b>${$('rWorker').value}</p><p><b>機器番号：</b>${$('rSerial').value}</p><p><b>設置場所：</b>${$('rPlace').value}</p><p><b>故障内容：</b>${$('rTrouble').value}</p><hr><p><b>原因・診断結果</b><br>${$('rCause').value.replaceAll('\n','<br>')}</p><p><b>修理内容</b><br>${$('rWork').value.replaceAll('\n','<br>')}</p><p><b>交換部品</b><br>${$('rParts').value.replaceAll('\n','<br>')}</p><p><b>備考</b><br>${$('rMemo').value.replaceAll('\n','<br>')}</p>`;$('reportPreview').innerHTML=html};$('printReport').onclick=()=>{if(!$('reportPreview').innerHTML)$('makeReport').click();print()};$('rDate').valueAsDate=new Date();
+let estimates=load('estimates');function renderEst(){let total=0;$('estimateRows').innerHTML=estimates.map(e=>{let s=e.q*e.p;total+=s;return`<tr><td>${e.i}</td><td>${e.q}</td><td>${Number(e.p).toLocaleString()}円</td><td>${s.toLocaleString()}円</td></tr>`}).join('');$('estimateTotal').textContent='合計：'+total.toLocaleString()+'円'}renderEst();$('addEstimate').onclick=()=>{estimates.push({i:$('eItem').value,q:Number($('eQty').value||1),p:Number($('ePrice').value||0)});save('estimates',estimates);renderEst()};$('clearEstimate').onclick=()=>{estimates=[];save('estimates',estimates);renderEst()};
+$('runAi').onclick=()=>{const vals=[...document.querySelectorAll('#ai input:checked')].map(x=>x.value);let res=[];if(vals.includes('AC100Vなし'))res.push('AC入力不良：電源コード・ヒューズ・端子台を優先確認。');if(vals.includes('DC12V/24Vなし'))res.push('メイン電源基板不良の可能性大。');if(vals.includes('LED昇圧基板入力あり出力なし'))res.push('LED昇圧基板不良：MOSFET、インダクタ、ダイオード、R8/R9、電解コンデンサを確認。');if(vals.includes('LEDバー単体不点灯'))res.push('LEDバー断線またはLED劣化の可能性大。');if(vals.includes('GNDアース不良'))res.push('モニター裏鉄板GND・アース接触不良で昇圧基板が誤動作している可能性。');if(vals.includes('MOSFET高温')||vals.includes('インダクタ高温'))res.push('放熱不足または昇圧回路過負荷。樹脂カバー・空気流路・LED電流を確認。');if(vals.includes('電解コンデンサ劣化'))res.push('電解コンデンサESR上昇により起動不良・リップル増大の可能性。');if(vals.includes('BL_EN/PWMなし'))res.push('メイン基板または制御信号線不良。');if(vals.includes('配線コネクタ接触不良'))res.push('コネクタ酸化・圧着不良・細線断線を確認。');$('aiResult').innerHTML=res.length?'<h3>推定結果</h3><ol><li>'+res.join('</li><li>')+'</li></ol>':'症状を選択してください。'};

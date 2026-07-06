@@ -1,90 +1,113 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChargeSPOT LL-20 診断アプリ</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ChargeSPOT LL-20 診断アプリ Ver.1.0</title>
   <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="app-header">
-    <div>
-      <h1>ChargeSPOT LL-20 診断</h1>
-      <p>LED不点灯・温度記録・報告書・見積</p>
+<header class="app-header">
+  <div>
+    <h1>ChargeSPOT LL-20 診断アプリ</h1>
+    <p>LED・モニター・電源・温度・報告書・見積</p>
+  </div>
+  <button id="homeBtn" class="ghost">ホーム</button>
+</header>
+
+<main>
+  <section id="home" class="screen active">
+    <h2>ホーム画面：故障項目選択</h2>
+    <div class="grid">
+      <button class="tile" data-open="led">💡 LED点灯しない</button>
+      <button class="tile" data-open="led">💡 LED点灯しない（部分的）</button>
+      <button class="tile" data-open="monitor">🖥 モニター画像が乱れる</button>
+      <button class="tile" data-open="monitor">🖥 モニター画像が映らない</button>
+      <button class="tile" data-open="power">📦 スロット・カセットを取り出せない</button>
+      <button class="tile" data-open="power">📦 スロット・カセットを戻しても認識しない</button>
+      <button class="tile" data-open="power">🔋 充電できない</button>
+      <button class="tile" data-open="power">📡 通信異常</button>
+      <button class="tile" data-open="power">🔁 再起動を繰り返す</button>
+      <button class="tile" data-open="power">⚡ ブレーカーが落ちる</button>
     </div>
-  </header>
+    <div class="notice">通電測定・AC100V測定は感電注意。十分な知識のある方が安全を確保して行ってください。</div>
+  </section>
 
-  <nav class="tabs">
-    <button class="tab active" data-target="diagnosis">診断</button>
-    <button class="tab" data-target="photo">写真</button>
-    <button class="tab" data-target="temp">温度</button>
-    <button class="tab" data-target="report">報告書</button>
-    <button class="tab" data-target="estimate">見積</button>
-  </nav>
+  <section id="led" class="screen"><h2>LED不点灯診断フローチャート</h2><div id="ledFlow" class="flow"></div></section>
+  <section id="monitor" class="screen"><h2>モニター不点灯診断</h2><div id="monitorFlow" class="flow"></div></section>
+  <section id="power" class="screen"><h2>電源異常診断</h2><div id="powerFlow" class="flow"></div></section>
 
-  <main>
-    <section id="diagnosis" class="panel active">
-      <h2>LED不点灯 診断フロー</h2>
-      <div class="card">
-        <div id="question" class="question"></div>
-        <div id="diagnosisButtons"></div>
-      </div>
-      <div class="warning">※ AC100V測定は感電注意。通電測定は知識のある人が行ってください。</div>
-    </section>
+  <section id="photo" class="screen">
+    <h2>写真撮影・保存</h2>
+    <input id="photoInput" type="file" accept="image/*" capture="environment" multiple />
+    <p class="hint">撮影した写真はこのブラウザ内に保存されます。</p>
+    <div id="photoList" class="photos"></div>
+    <button id="clearPhotos" class="danger">写真を全削除</button>
+  </section>
 
-    <section id="photo" class="panel">
-      <h2>写真記録</h2>
-      <div class="card">
-        <label class="file-label">
-          写真を撮影・選択
-          <input id="photoInput" type="file" accept="image/*" capture="environment" />
-        </label>
-        <img id="preview" alt="選択した写真" />
-        <textarea id="photoMemo" placeholder="写真メモ：例 LED昇圧基板、R8/R9焼損、コネクタ抜けなど"></textarea>
-      </div>
-    </section>
+  <section id="temp" class="screen">
+    <h2>温度測定記録</h2>
+    <div class="form">
+      <input id="tempPoint" placeholder="測定箇所 例：MOSFET / インダクタ / LED上部">
+      <input id="tempValue" type="number" step="0.1" placeholder="温度 ℃">
+      <textarea id="tempMemo" placeholder="メモ 例：カバーあり、30分通電後"></textarea>
+      <button id="addTemp">温度を記録</button>
+    </div>
+    <table><thead><tr><th>時刻</th><th>箇所</th><th>℃</th><th>判定</th><th>メモ</th></tr></thead><tbody id="tempRows"></tbody></table>
+    <button id="clearTemps" class="danger">温度記録を全削除</button>
+  </section>
 
-    <section id="temp" class="panel">
-      <h2>温度記録</h2>
-      <div class="card grid">
-        <label>外気温 ℃<input id="tOutside" type="number" step="0.1"></label>
-        <label>ケース下部 ℃<input id="tBottom" type="number" step="0.1"></label>
-        <label>ケース上部 ℃<input id="tTop" type="number" step="0.1"></label>
-        <label>MOSFET ℃<input id="tMosfet" type="number" step="0.1"></label>
-        <label>昇圧インダクタ ℃<input id="tInductor" type="number" step="0.1"></label>
-        <label>電解コンデンサ ℃<input id="tCap" type="number" step="0.1"></label>
-      </div>
-      <button class="primary" id="tempJudgeBtn">温度判定</button>
-      <div id="tempResult" class="result"></div>
-    </section>
+  <section id="report" class="screen">
+    <h2>修理報告書</h2>
+    <div class="form">
+      <input id="rDate" type="date">
+      <input id="rWorker" placeholder="作業者名">
+      <input id="rSerial" placeholder="機器番号・管理番号">
+      <input id="rPlace" placeholder="設置場所">
+      <select id="rTrouble"><option>LED点灯しない</option><option>モニター不点灯</option><option>電源異常</option><option>再起動する</option><option>その他</option></select>
+      <textarea id="rCause" placeholder="原因・診断結果"></textarea>
+      <textarea id="rWork" placeholder="修理内容"></textarea>
+      <textarea id="rParts" placeholder="交換部品"></textarea>
+      <textarea id="rMemo" placeholder="備考"></textarea>
+      <button id="makeReport">報告書を作成</button>
+      <button id="printReport">PDF保存/印刷</button>
+    </div>
+    <div id="reportPreview" class="paper"></div>
+  </section>
 
-    <section id="report" class="panel">
-      <h2>修理報告書</h2>
-      <div class="card grid">
-        <label>設置先<input id="siteName" type="text"></label>
-        <label>機番<input id="machineNo" type="text"></label>
-        <label>作業者<input id="worker" type="text"></label>
-        <label>作業日<input id="workDate" type="date"></label>
-      </div>
-      <textarea id="workContent" placeholder="作業内容：例 LED昇圧基板入力電圧確認、出力なし、GND再固定、基板交換"></textarea>
-      <button class="primary" id="makeReportBtn">報告書を作成</button>
-      <textarea id="reportOutput" readonly></textarea>
-    </section>
+  <section id="estimate" class="screen">
+    <h2>見積書作成</h2>
+    <div class="form row">
+      <input id="eItem" placeholder="作業・部品名">
+      <input id="eQty" type="number" value="1" placeholder="数量">
+      <input id="ePrice" type="number" placeholder="単価">
+      <button id="addEstimate">追加</button>
+    </div>
+    <table><thead><tr><th>内容</th><th>数量</th><th>単価</th><th>金額</th></tr></thead><tbody id="estimateRows"></tbody></table>
+    <h3 id="estimateTotal">合計：0円</h3>
+    <button id="clearEstimate" class="danger">見積を全削除</button>
+  </section>
 
-    <section id="estimate" class="panel">
-      <h2>見積作成</h2>
-      <div class="card grid">
-        <label>LED昇圧基板交換 数量<input id="qtyBoost" type="number" value="0"></label>
-        <label>LEDバー交換 数量<input id="qtyLed" type="number" value="0"></label>
-        <label>配線修復 数量<input id="qtyWire" type="number" value="0"></label>
-        <label>点検・診断 数量<input id="qtyCheck" type="number" value="1"></label>
-      </div>
-      <button class="primary" id="calcEstimateBtn">見積計算</button>
-      <div id="estimateResult" class="result"></div>
-    </section>
-  </main>
+  <section id="ai" class="screen">
+    <h2>AI故障原因推定</h2>
+    <div class="checklist">
+      <label><input type="checkbox" value="AC100Vなし"> AC100Vが無い</label>
+      <label><input type="checkbox" value="DC12V/24Vなし"> DC12V/24Vが無い</label>
+      <label><input type="checkbox" value="LED昇圧基板入力あり出力なし"> LED昇圧基板に入力あり・出力なし</label>
+      <label><input type="checkbox" value="LEDバー単体不点灯"> LEDバー単体が点灯しない</label>
+      <label><input type="checkbox" value="GNDアース不良"> GND/アースが怪しい</label>
+      <label><input type="checkbox" value="MOSFET高温"> MOSFETが70℃以上</label>
+      <label><input type="checkbox" value="インダクタ高温"> インダクタが80℃以上</label>
+      <label><input type="checkbox" value="電解コンデンサ劣化"> 電解コンデンサ膨張・ESR高い</label>
+      <label><input type="checkbox" value="BL_EN/PWMなし"> BL_EN/PWM信号が無い</label>
+      <label><input type="checkbox" value="配線コネクタ接触不良"> コネクタ・配線接触不良</label>
+    </div>
+    <button id="runAi">推定する</button>
+    <div id="aiResult" class="result"></div>
+  </section>
+</main>
 
-  <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
